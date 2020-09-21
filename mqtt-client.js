@@ -8,20 +8,30 @@ let client  = mqtt.connect(
         password: process.env.MQTT_PASSWORD
     })
 
-function setup() {
+function setup(sock) {
     client.on('connect', function () {
         console.log('Connected!! Lars is the King of the planet');
     })
 
     client.on('message', function (topic, message) {
+        let msg = message.toString();
+        console.debug(`${topic} :: ${msg}`)
+
+        sock.emit('mqtt', {topic: topic, message: msg})
+
         if (topic === 'esp32/environment') {
             // message is Buffer
-            //console.log(`${topic} ${message.toString()}`)
-            db.saveSensorData(message.toString())
+            db.saveSensorData(msg)
+        } else {
+            // Do nothing
         }
     })
 
     client.subscribe('#');
+
+    sock.on('connection', (socket) => {
+        console.log('Socket connected')
+    })
 }
 
 module.exports = {
